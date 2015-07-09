@@ -1,0 +1,84 @@
+---
+title: DDoS Open Threat Signaling Requirements
+# abbrev: DOTS-Requirements
+docname: draft-mortensen-threat-signaling-requirements-00
+date: 2015-07-07
+# date: 2015-07
+# date: 2015
+
+area: Security
+wg: DOTS Working Group
+kw: Internet-Draft
+cat: info
+
+coding: us-ascii
+pi:
+#  - toc
+#  - sortrefs
+#  - symrefs
+  toc: yes
+  sortrefs: yes
+  symrefs: yes
+
+author:
+      -
+        ins: A. Mortensen
+        name: Andrew Mortensen
+        org: Arbor Networks, Inc.
+        # street:
+        # - 2727 S. State St
+        street: 2727 S. State St
+        city: Ann Arbor
+        state: MI
+        code: 48104
+        country: United States
+        email: amortensen@arbor.net
+
+normative:
+
+--- abstract
+
+This document discusses the requirements for an open threat signaling protocol
+or protocols meeting the goals of the DDoS Open Threat Signaling (DOTS)
+Working Group.
+
+
+-- middle
+
+Introduction            {#problems}
+============
+The DOTS Working Group has assigned itself the task of standardizing a protocol
+or protocols capable of signaling ongoing DDoS attack information and threat
+handling requests. The result is expected to communicate not only the need for
+aid fending off an attack, but also as much attack classification as can
+reasonably be discerned by the signaler.
+
+The requirements for these protocols are unusually stringent. The data link
+between signaling elements may be saturated with attack traffic--likely inbound,
+but outbound congestion must also be considered--and the signaling elements can
+not rely an the availability of an out-of-band channel to report the attack and
+request threat handling.
+
+As such, the protocols must have certain characteristics tending to increase
+the probability of signal delivery between endpoints, including:
+
+* minimal message size to eliminate signal fragmentation,
+* minimal RTT for signal delivery, with a preference for connectionless
+  transports such as UDP,
+* redundant signal transmission,
+* signaler ability to signal multiple receivers, and
+* detection of signal degradation (i.e., lossiness) between endpoints.
+
+Additionally, the protocol or protocols must be rich enough to
+
+* provide such attack telemetry as is available to the signaler,
+* permit the signaler to request or withdraw a request for intervention
+  from the signal receiver, # XXX
+* permit the signaler to request refinement or expansion of the scope of threat
+  handling performed by the signal receiver,
+* provide for feedback to be delivered to the signaler from the entity or entities
+  handling a threat on the signaler's behalf.
+
+These additional requirements on top of the network constraints imposed by
+attack traffic demand a method to preconfigure certain aspects of the signaling
+between endpoints.
