@@ -1,10 +1,7 @@
 ---
 title: DDoS Open Threat Signaling Requirements
-# abbrev: DOTS-Requirements
 docname: draft-mortensen-threat-signaling-requirements-00
 date: 2015-07-07
-# date: 2015-07
-# date: 2015
 
 area: Security
 wg: DOTS Working Group
@@ -13,9 +10,6 @@ cat: info
 
 coding: us-ascii
 pi:
-#  - toc
-#  - sortrefs
-#  - symrefs
   toc: yes
   sortrefs: yes
   symrefs: yes
@@ -25,8 +19,6 @@ author:
         ins: A. Mortensen
         name: Andrew Mortensen
         org: Arbor Networks, Inc.
-        # street:
-        # - 2727 S. State St
         street: 2727 S. State St
         city: Ann Arbor, MI
         code: 48104
