@@ -28,8 +28,7 @@ author:
         # street:
         # - 2727 S. State St
         street: 2727 S. State St
-        city: Ann Arbor
-        state: MI
+        city: Ann Arbor, MI
         code: 48104
         country: United States
         email: amortensen@arbor.net
