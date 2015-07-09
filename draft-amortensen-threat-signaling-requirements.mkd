@@ -43,7 +43,7 @@ or protocols meeting the goals of the DDoS Open Threat Signaling (DOTS)
 Working Group.
 
 
--- middle
+--- middle
 
 Introduction            {#problems}
 ============
@@ -55,9 +55,9 @@ reasonably be discerned by the signaler.
 
 The requirements for these protocols are unusually stringent. The data link
 between signaling elements may be saturated with attack traffic--likely inbound,
-but outbound congestion must also be considered--and the signaling elements can
-not rely an the availability of an out-of-band channel to report the attack and
-request threat handling.
+but outbound congestion must also be considered--and the signaling elements
+cannot rely an the availability of an out-of-band channel to report the attack
+and request threat handling.
 
 As such, the protocols must have certain characteristics tending to increase
 the probability of signal delivery between endpoints, including:
@@ -76,8 +76,8 @@ Additionally, the protocol or protocols must be rich enough to
   from the signal receiver, # XXX
 * permit the signaler to request refinement or expansion of the scope of threat
   handling performed by the signal receiver,
-* provide for feedback to be delivered to the signaler from the entity or entities
-  handling a threat on the signaler's behalf.
+* deliver feedback to the signaler from the entity or entities handling a
+  threat on the signaler's behalf.
 
 These additional requirements on top of the network constraints imposed by
 attack traffic demand a method to preconfigure certain aspects of the signaling
