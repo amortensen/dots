@@ -36,8 +36,10 @@ normative:
   RFC5489:
   RFC6347:
   RFC6520:
-  I-D.teague-open-threat-signaling:
   I-D.ietf-netconf-restconf:
+  I-D.ietf-tls-tls13:
+  I-D.teague-open-threat-signaling:
+
 
 informative:
   DICE:
@@ -391,10 +393,10 @@ otherwise hostile network conditions may be unacceptable for DOTS.
 Some of this overhead may be eliminated using preshared keys (e.g.,
 {{RFC5487}} and {{RFC5489}}), but the round-trip overhead of the
 three-way handshake is less easily overcome. The current drafts
-for TLS 1.3 {{TLS13}} make some headway in this regard, introducing
-a 1-RTT TLS handshake. This is a vast improvement for DOTS operations,
-but the timeline for standardization and vendor implementation is
-uncertain.
+for TLS 1.3 {{I-D.ietf-tls-tls13}} make some headway in this regard,
+introducing a 1-RTT TLS handshake. This is a vast improvement for DOTS
+operations, but the timeline for standardization and vendor
+implementation is uncertain.
 
 Regardless of TLS handshake innovation, DTLS by itself lacks a way
 to detect dead peers. The DTLS Heartbeat Extension {{RFC6520}}
