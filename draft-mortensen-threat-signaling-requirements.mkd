@@ -26,6 +26,24 @@ author:
         email: amortensen@arbor.net
 
 normative:
+  RFC768:
+  RFC2616:
+  RFC3917:
+
+informative:
+  RFC2119:
+  IANA-IPFIX-IE:
+    target: http://www.iana.org/assignments/ipfix
+    title: IP Flow Information Export (IPFIX) Entities
+    date: 2015-04-08
+  REST:
+    target: https://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm
+    title: Architectural Styles and the Design of Network-based Software Architectures
+    author:
+        ins: R. Fielding
+        name: Roy Fielding
+        org: University of California, Irvine
+    date: 2000
 
 --- abstract
 
@@ -38,27 +56,193 @@ Working Group.
 
 Introduction            {#problems}
 ============
+
+As the DDoS attack scale and frequency continue to grow, a number of "cloud"
+mitigation providers have emerged to offer traffic scrubbing services on
+request. Each service offers its own ad hoc interfaces for subscribers to
+request threat handling, leaving subscribers tied to proprietary implementations
+that are not portable from service to service. These ad hoc implementations
+also severely limit the subset of network elements capable of participating
+in any coordinated attack response.
+
+The current lack of a common method to make inter-domain threat handling
+requests and share realtime attack telemetry hampers response coordination.
 The DOTS Working Group has assigned itself the task of standardizing a protocol
-or protocols capable of signaling ongoing DDoS attack information and threat
-handling requests. The result is expected to communicate not only the need for
-aid fending off an attack, but also as much attack classification as can
-reasonably be discerned by the signaler.
+or protocols to address that lack.
 
 The requirements for these protocols are unusually stringent. The data link
 between signaling elements may be saturated with attack traffic--likely inbound,
 but outbound congestion must also be considered--and the signaling elements
-cannot rely an the availability of an out-of-band channel to report the attack
-and request threat handling.
+cannot rely an the availability of an out-of-band channel to report the
+attack and request threat handling. High packet loss rates are to be
+expected, rendering every round trip uncertain.
 
-As such, the protocols must have certain characteristics tending to increase
-the probability of signal delivery between endpoints, including:
+As such, the protocol or protocols which DOTS develops or adapts must
+have certain characteristics tending to increase the probability of
+signal delivery between endpoints. At the same time, the protocol or
+protocols must be rich enough to support not only simple calls for aid
+and limited attack telemetry, but also extensibility such that DOTS is
+adaptable to future needs.
 
+
+Terminology
+===========
+
+The following terms are meant to help define relationships between elements
+as well as the data they exchange:
+
+Attack Telemetry
+----------------
+
+Attack Telemetry is a catch-all term for collected network traffic
+characteristics defining the nature of a DDoS attack, and which
+contributes to the detection, classification, traceback, and
+mitigation of the attack.
+
+In addition to the properties defining IP Traffic Flow as described
+by {{RFC3917}}, the Attack Telemetry may include information like:
+
+* traffic rates from attacker sources in packets and bytes per second,
+* detected attack class (e.g., reflection/amplification, resource
+  exhaustion, etc.),
+* attack duration
+
+as well as any other information deemed valuable for attack response by the
+Working Group.
+
+Configuration Channel
+---------------------
+
+The Configuration Channel is a RESTful {{REST}} interface to
+establish a common understanding of signal and threat handling
+between the Signaler and Signal Handler. The RESTful interface
+simplifies application control over DOTS elements and improves
+attack response coordination through the exchange of 
+
+Signal Channel
+--------------
+
+The Signal Channel refers to the bidirectional communication layer
+established between the Signaler and the Signal Handler, over which
+Signals and Signal Responses are transmitted.
+
+Signal
+------
+
+A DOTS Signal is a message sent from a Signaler to a Signal Handler.
+The Signal carries information necessary to identify the Signaler
+and communicate Signaler intent, attack insight to the Signal Handler,
+and indicators useful for measuring Signal Channel Health.
+
+The Signal is also the vehicle through which a Signaler requests
+threat handling.
+
+Signal Response
+---------------
+A DOTS Signal Response is a message sent from Signal Handler to
+a Signaler. A Signal Response is variation of a Signal, in that
+it includes data identifying the originating Signal Handler and
+indicators of Signal Channel Health. The Signal Response will
+also include information describing the status of any ongoing
+threat handling undertaken at a Supplicant's request.
+
+Signaler
+--------
+
+The DOTS endpoint transmitting a Signal to a Signal Handler in
+order to communicate Attack Telemetry and request or withdraw a
+request for threat handling. When a Signaler requests threat
+handling from the Signal Handler, the Signaler is called a
+Supplicant.
+
+Supplicant
+----------
+
+A DOTS Supplicant is a Signaler requesting threat handling from
+the Signal Handler. The Supplicant is often downstream of the
+attack from the Signal Handler, so the Supplicant will often be
+requesting attack response closer to the sources of attack.
+
+Signal Handler
+--------------
+
+The DOTS endpoint responsible for processing and responding to
+Signals received from a Signaler. A Signal Handler may or may
+not be in the same domain as the Signaler. When a Supplicant
+requests threat handling, the Signal Handler is responsible for
+communicating that request to the entities tasked with the attack
+response. The attack response itself is out of scope for DOTS,
+but the Signal Handler should transmit Signal Responses with
+available attack response status to the Supplicant.
+
+Note that Signal Handler and Threat Handler are often but not
+always synonymous.
+
+Signal Relay
+------------
+
+A DOTS node acting as a Signal Handler and a Signaler. In the
+role of a Signal Handler, a Signal Relay receives Signals from
+a downstream Signaler, and then acts as a Signaler when relaying
+the Signal to an upstream Signal Handler. A Signal Relay also
+relays any responses from upstream to the originating Signaler.
+
+Threat Handler
+--------------
+
+The Threat Handler is the entity or collection of entities tasked
+with handling an attack at the request of a Supplicant. The
+Threat Handler and Signal Handler may be one and the same, but
+are not required to be.
+
+
+Signal Protocol
+===============
+
+The following are requirements for successful threat signaling.
+
+Transport
+---------
+
+DOTS must operate under severe attack conditions. As such, DOTS should
+prefer the use of connectionless transports like UDP {{RFC768}}, which
+do not depend on delivery acknowledgment.
+
+Where additional constraints imposed by middlebox limitations,
+overly aggressive filtering, or network policy disqualify UDP,
+TCP MAY be used for the Signal Channel. However, TCP remains a
+poor choice for inter-domain signaling over a saturated link,
+and consideration should be given to using a Signal Relay
+between the Signaler and the remote domain's Signal Handler.
+
+Message Size
+------------
+
+DOTS message size should be minimal to avoid signal fragmentation.
+
+
+requiring 
+The overhead of a stateful protocol such as TCP 
+DOTS 
+Due to the need for DOTS to operate under attack conditions,
+
+
+A DOTS message,
+Due to the high likelihood of link saturation between the signaler and the
+signal receiver
+The signal transport should be 
+
+ # XXX split to section covering transport needs
 * minimal message size to eliminate signal fragmentation,
 * minimal RTT for signal delivery, with a preference for connectionless
   transports such as UDP,
 * redundant signal transmission,
 * signaler ability to signal multiple receivers, and
 * detection of signal degradation (i.e., lossiness) between endpoints.
+
+ # XXX signal privacy/integrity section
+
+ # XXX move to protocol info section
 
 Additionally, the protocol or protocols must be rich enough to
 
@@ -70,6 +254,41 @@ Additionally, the protocol or protocols must be rich enough to
 * deliver feedback to the signaler from the entity or entities handling a
   threat on the signaler's behalf.
 
+The constraints imposed by the likelihood of a congested or saturated link
+between endpoints limit
+
 These additional requirements on top of the network constraints imposed by
 attack traffic demand a method to preconfigure certain aspects of the signaling
 between endpoints.
+
+ #XXX This should be moved to protocol requirements section below
+
+ # XXX Move bulk of this to protocol requirements section below
+A message sent from a DOTS Signaler to a Signal Handler. The Signal
+  carries data necessary to identify the Signaler, to provide indicators of the
+  the Signal Channel health (e.g., a timestamp or sequence number of the
+  last message received), to indicate Supplicant status (i.e., whether
+  the Signaler is requesting threat handling), and any available Attack Telemetry.
+
+
+* *Signal Response* - A message sent from a Signal Handler to a Signaler. A Signal
+  Reponse shares some characteristics with a Signal, such as identifying data
+  and indicators of Signal Channel health. The Signal Response also provides
+  feedback relating to any ongoing threat handling requested by the Supplicant.
+  Such feedback might include packet and byte counters, indicators of mitigation
+  scope and status, and so on.
+
+Configuration data would include such things as:
+
+* Signaler address space protection preferences
+* Static Black/White lists to apply during threat handling
+* UUID assigned to the Signaler by the Signal Handler, which the
+  Signaler must include in subsequent Signals.
+* Other information not well-suited to transmission in a compact
+  format over a link made 
+
+
+Security Considerations
+=======================
+
+--- back
