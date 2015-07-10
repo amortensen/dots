@@ -27,11 +27,12 @@ author:
 
 normative:
   RFC768:
+  RFC793:
+  RFC2119:
   RFC2616:
   RFC3917:
 
 informative:
-  RFC2119:
   IANA-IPFIX-IE:
     target: http://www.iana.org/assignments/ipfix
     title: IP Flow Information Export (IPFIX) Entities
@@ -116,8 +117,8 @@ Configuration Channel
 The Configuration Channel is a RESTful {{REST}} interface to
 establish a common understanding of signal and threat handling
 between the Signaler and Signal Handler. The RESTful interface
-simplifies application control over DOTS elements and improves
-attack response coordination through the exchange of 
+enables application control over DOTS elements, improving
+attack response coordination through exchange of 
 
 Signal Channel
 --------------
@@ -196,44 +197,81 @@ Threat Handler and Signal Handler may be one and the same, but
 are not required to be.
 
 
-Signal Protocol
-===============
+Protocol
+========
 
 The following are requirements for successful threat signaling.
+
+Operation
+---------
+
+DOTS does not require high-frequency message transmission rates
+to be successful.
+
+The rate at which a DOTS element sends messages to a peer
+does not need to be high.
+
+### Keep-Alive ###
+
+DOTS message rates do not need to be 
+
+### Redundancy ###
 
 Transport
 ---------
 
-DOTS must operate under severe attack conditions. As such, DOTS should
-prefer the use of connectionless transports like UDP {{RFC768}}, which
-do not depend on delivery acknowledgment.
+DOTS must continue to operate in the face of severe packet loss
+rates. The signal protocol does not require reliable, in-order
+delivery to be effective. The protocol may indeed become less
+reliable in the attempt to ensure all signal messages are
+delivered in the order sent, as pathological network conditions
+lead to missed delivery acknowledgments from the peer. In the
+worst case using a reliable transport, none of the DOTS
+signaler's retransmissions receive an ACK, resulting in
+spurious dead peer detection by the sender.
+
+As such, the DOTS protocol SHOULD use connectionless transports
+like the User Datagram Protocol (UDP) {{RFC768}}. While UDP
+imposes some additional work on the protocol, it makes DOTS
+more flexible when determining whether a peer is truly
+unresponsive, or merely temporarily unreachable due to network
+congestion.
+
+### Congestion Control Considerations ###
+
+While UDP makes no accommodation for congestion control, the DOTS
+protocol's transmission rate is negligible regardless of network
+conditions.
+
+### Alternative Transport Considerations ###
 
 Where additional constraints imposed by middlebox limitations,
 overly aggressive filtering, or network policy disqualify UDP,
 TCP MAY be used for the Signal Channel. However, TCP remains a
-poor choice for inter-domain signaling over a saturated link,
-and consideration should be given to using a Signal Relay
-between the Signaler and the remote domain's Signal Handler.
+poor choice for inter-domain signaling over a saturated link
+for the reasons described above, and consideration should be
+given to using a Signal Relay between the Signaler and the
+remote domain's Signal Handler.
 
-Message Size
-------------
+### Message Size ###
 
-DOTS message size should be minimal to avoid signal fragmentation.
+SEE RFC5405
+
+DOTS protocol messages MUST be smaller than the link maximum
+transmission unit (MTU) to avoid fragmentation. Fragmentation
+leads to a situation in which any single lost fragment causes
+entire the message to be dropped. In the lossy network
+conditions under which DOTS is expected to operate,
+fragmentation unnecessarily increases the likelihood of message
+delivery failure.
+
+### Transport Security ###
+
+Signal 
 
 
-requiring 
-The overhead of a stateful protocol such as TCP 
-DOTS 
-Due to the need for DOTS to operate under attack conditions,
-
-
-A DOTS message,
-Due to the high likelihood of link saturation between the signaler and the
-signal receiver
-The signal transport should be 
 
  # XXX split to section covering transport needs
-* minimal message size to eliminate signal fragmentation,
 * minimal RTT for signal delivery, with a preference for connectionless
   transports such as UDP,
 * redundant signal transmission,
