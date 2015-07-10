@@ -31,7 +31,6 @@ normative:
   RFC1191:
   RFC2119:
   RFC2616:
-  RFC2914:
   RFC3917:
   RFC5487:
   RFC5489:
@@ -60,9 +59,8 @@ informative:
 
 --- abstract
 
-This document discusses the requirements for an open threat signaling protocol
-or protocols meeting the goals of the DDoS Open Threat Signaling (DOTS)
-Working Group.
+This document discusses the requirements for a protocol meeting the
+goals of the DDoS Open Threat Signaling (DOTS) Working Group.
 
 
 --- middle
@@ -93,10 +91,10 @@ cannot rely an the availability of an out-of-band channel to report the
 attack and request threat handling. High packet loss rates are to be
 expected, rendering every round trip uncertain.
 
-As such, the protocol or protocols which DOTS develops or adapts must
+As such, the protocol which DOTS develops or adapts must
 have certain characteristics tending to increase the probability of
-signal delivery between endpoints. At the same time, the protocol or
-protocols must be rich enough to support not only simple calls for aid
+signal delivery between endpoints. At the same time, the protocol
+must be rich enough to support not only simple calls for aid
 and limited attack telemetry, but also extensibility such that DOTS is
 adaptable to future needs.
 
