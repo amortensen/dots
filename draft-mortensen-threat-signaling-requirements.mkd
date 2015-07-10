@@ -11,7 +11,7 @@ cat: info
 coding: us-ascii
 pi:
   toc: yes
-  sortrefs: yes
+  sortrefs: no
   symrefs: yes
 
 author:
@@ -28,11 +28,23 @@ author:
 normative:
   RFC768:
   RFC793:
+  RFC1191:
   RFC2119:
   RFC2616:
+  RFC2914:
   RFC3917:
+  RFC5487:
+  RFC5489:
+  RFC6347:
+  RFC6520:
+  I-D.teague-open-threat-signaling:
+  I-D.ietf-netconf-restconf:
 
 informative:
+  DICE:
+    target: https://datatracker.ietf.org/wg/dice/charter/
+    title: DTLS in Constrained Environments
+    date: 2015-07-10
   IANA-IPFIX-IE:
     target: http://www.iana.org/assignments/ipfix
     title: IP Flow Information Export (IPFIX) Entities
@@ -58,7 +70,10 @@ Working Group.
 Introduction            {#problems}
 ============
 
-As the DDoS attack scale and frequency continue to grow, a number of "cloud"
+Overview
+--------
+
+As DDoS attack scale and frequency continue to grow, a number of cloud
 mitigation providers have emerged to offer traffic scrubbing services on
 request. Each service offers its own ad hoc interfaces for subscribers to
 request threat handling, leaving subscribers tied to proprietary implementations
@@ -84,6 +99,13 @@ signal delivery between endpoints. At the same time, the protocol or
 protocols must be rich enough to support not only simple calls for aid
 and limited attack telemetry, but also extensibility such that DOTS is
 adaptable to future needs.
+
+Conventions
+-----------
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in {{RFC2119}}.
 
 
 Terminology
@@ -135,6 +157,7 @@ The Signal carries information necessary to identify the Signaler
 and communicate Signaler intent, attack insight to the Signal Handler,
 and indicators useful for measuring Signal Channel Health.
 
+A Signal permits a Signaler to r
 The Signal is also the vehicle through which a Signaler requests
 threat handling.
 
@@ -147,6 +170,12 @@ indicators of Signal Channel Health. The Signal Response will
 also include information describing the status of any ongoing
 threat handling undertaken at a Supplicant's request.
 
+Note that Signal Responses are sent without solicitation by a
+Signaler. That is, a Signal Handler sends Signal Responses to
+an established Signaler regardless of whether the Signal
+Handler has received a Signal message. (See Signal Channel
+Health below).
+
 Signaler
 --------
 
@@ -155,6 +184,9 @@ order to communicate Attack Telemetry and request or withdraw a
 request for threat handling. When a Signaler requests threat
 handling from the Signal Handler, the Signaler is called a
 Supplicant.
+
+A Signaler MAY establish Signal Channels with multiple
+Signal Handlers.
 
 Supplicant
 ----------
@@ -174,7 +206,7 @@ requests threat handling, the Signal Handler is responsible for
 communicating that request to the entities tasked with the attack
 response. The attack response itself is out of scope for DOTS,
 but the Signal Handler should transmit Signal Responses with
-available attack response status to the Supplicant.
+threat handling feedback to the Supplicant.
 
 Note that Signal Handler and Threat Handler are often but not
 always synonymous.
@@ -197,51 +229,117 @@ Threat Handler and Signal Handler may be one and the same, but
 are not required to be.
 
 
-Protocol
+Protocol                        {#protocol}
 ========
 
 The following are requirements for successful threat signaling.
 
-Operation
+Operation                       {#protocol-operation}
 ---------
 
-DOTS does not require high-frequency message transmission rates
-to be successful.
+One of the unusual aspects of DOTS is that it depends not so much
+on protocol reliability but on protocol resiliency. Signal
+lossiness, to a greater or lesser degree, is to be expected, and
+the protocol must continue to operate regardless.
 
-The rate at which a DOTS element sends messages to a peer
-does not need to be high.
+This section discusses the protocol characteristics required to
+achieve the necessary resiliency, while also retaining the
+signal effectiveness sought by the Working Group.
 
-### Keep-Alive ###
+DOTS should be able to absorb the loss of multiple consecutive Signals or
+Signal Responses and still operate nominally, relying on
+measures like redundant message transmission to increase the
+likelihood of successful delivery.
 
-DOTS message rates do not need to be 
+By the same token, the protocol demands the DOTS nodes share a
+common understanding of a failed signal channel.
 
-### Redundancy ###
+### Endpoint Communication ###
+
+A synchronous message-oriented protocol is ill-suited for the
+conditions under which DOTS is expected to operate. Such a protocol
+would require a level of reliable message delivery in either
+direction that we cannot depend on for DOTS.
+
+In contrast, an asynchronous message-oriented protocol fits DOTS
+requirements, offering resiliency even when dealing with a high level
+of signal lossiness. As long as the protocol includes indicators
+showing the time or sequence of the last message received by the
+peer, each endpoint can continue signaling, and incorporate the
+most recent data from its peer when messages arrive.
+
+In practice, the Signaler sends messages to the Signal Handler,
+regardless of responses from Signal Handler, and the Signal Handler
+does the same in the opposite direction. Until an endpoint detects
+fail
+health
+continue to arrive at each endpoint, DOTS is operational.
+
+#### Signal Channel Health ####
+
+Monitoring signal delivery success rates is vital to normal DOTS
+operations. The protocol SHOULD include a way for each endpoint
+to detect when their respective peers last received a message.
+This could be achieved through inclusion of timestamps or sequence
+numbers in the signal messages.
+
+With this method for detecting signal lossiness in place, any
+received DOTS message acts as a signal heartbeat, meaning no
+additional keep-alive messages are needed.
+
+Should too much time elapse since an endpoint last received a
+message from its peer, the endpoint SHOULD consider the peer
+unresponsive, and in some way alert the operator to the
+loss of signal. Similarly, if messages continue to arrive from
+the peer, but the timestamp or sequence number do not update
+in spite of repeated message transmissions to the peer, the
+signal MUST be considered degraded, and an appropriate alert
+should be delivered to the operator.
+
+The method of alerting is out of scope. The endpoints may agree
+upon the signal failure time-to-live using the configuration channel.
+
+### Message Frequency ###
+
+TODO
+
+### Redundant Signal Channels ###
+
+A Signaler may wish to establish Signal Channels with multiple
+Signal Handlers in the same domain to increase the likelihood
+that a Supplicant request for threat handling will be honored.
+
+### Redundant Transmission ###
+
+The likelihood of packet loss due to congestion caused by, for
+example, a volumetric attack diminishes the resiliency of the
+protocol. A low-cost method to increase the probability of
+successful message delivery is through redundant message
+transmission at send time.
 
 Transport
 ---------
 
-DOTS must continue to operate in the face of severe packet loss
-rates. The signal protocol does not require reliable, in-order
-delivery to be effective. The protocol may indeed become less
-reliable in the attempt to ensure all signal messages are
-delivered in the order sent, as pathological network conditions
-lead to missed delivery acknowledgments from the peer. In the
-worst case using a reliable transport, none of the DOTS
-signaler's retransmissions receive an ACK, resulting in
-spurious dead peer detection by the sender.
+As noted above, the DOTS signal protocol does not require
+reliable, in-order delivery to be effective. The protocol may
+indeed become less reliable in the attempt to ensure all signal
+messages are delivered in the order sent, as pathological network
+conditions lead to missed delivery acknowledgments from the peer.
+In the worst case, none of the transport acknowledgements reach
+the signaler, resulting in spurious dead peer detection and
+subsequent connection teardown.
 
-As such, the DOTS protocol SHOULD use connectionless transports
-like the User Datagram Protocol (UDP) {{RFC768}}. While UDP
-imposes some additional work on the protocol, it makes DOTS
-more flexible when determining whether a peer is truly
-unresponsive, or merely temporarily unreachable due to network
-congestion.
+As such, it is RECOMMENDED that the DOTS protocol use
+connectionless transports like the User Datagram Protocol (UDP)
+{{RFC768}}. While UDP imposes some additional work on the protocol,
+the minimal overhead for transmission aligns with DOTS requirements
+for protocol resiliency.
 
 ### Congestion Control Considerations ###
 
-While UDP makes no accommodation for congestion control, the DOTS
-protocol's transmission rate is negligible regardless of network
-conditions.
+A DOTS signal channel will not contribute to link congestion,
+as the protocol's transmission rate will be negligible
+regardless of network conditions.
 
 ### Alternative Transport Considerations ###
 
@@ -255,32 +353,56 @@ remote domain's Signal Handler.
 
 ### Message Size ###
 
-SEE RFC5405
-
-DOTS protocol messages MUST be smaller than the link maximum
-transmission unit (MTU) to avoid fragmentation. Fragmentation
-leads to a situation in which any single lost fragment causes
-entire the message to be dropped. In the lossy network
-conditions under which DOTS is expected to operate,
+DOTS protocol messages MUST be smaller than the path maximum
+transmission unit (MTU) to avoid fragmentation. In the lossy
+network conditions under which DOTS is expected to operate,
 fragmentation unnecessarily increases the likelihood of message
-delivery failure.
+delivery failure, as a single lost fragment will cause the
+entire message to be discarded.
 
 ### Transport Security ###
 
-Signal 
+The DOTS Working Group charter describes the need to ensure
+"appropriate regard for authentication, authorization, integrity,
+and authenticity" in any developed or adapted protocols.
 
+#### DTLS ####
 
+On the surface, Datagram Transport Layer Security {{RFC6347}}
+would seem to be the obvious choice to meet those requirements.
+However, the conventional three-way TLS handshake using public-key
+infrastructure incurs significant overhead. The elevated
+likelihood of handshake failure due to saturated links or
+otherwise hostile network conditions may be unacceptable for DOTS.
 
- # XXX split to section covering transport needs
-* minimal RTT for signal delivery, with a preference for connectionless
-  transports such as UDP,
-* redundant signal transmission,
-* signaler ability to signal multiple receivers, and
-* detection of signal degradation (i.e., lossiness) between endpoints.
+Some of this overhead may be eliminated using preshared keys (e.g.,
+{{RFC5487}} and {{RFC5489}}), but the round-trip overhead of the
+three-way handshake is less easily overcome. The current drafts
+for TLS 1.3 {{TLS13}} make some headway in this regard, introducing
+the 1-RTT TLS handshake.
 
- # XXX signal privacy/integrity section
+Regardless of TLS handshake innovation, DTLS by itself lacks a way
+to detect dead peers. The DTLS Heartbeat Extension {{RFC6520}}
+resolves this, but represents an another messaging layer likely to
+be affected by network lossiness.  In addition, the DTLS Heartbeat
+extension requires immediate responses to heartbeat requests, with
+the requester retransmitting up to the limit defined in {{RFC6347}}.
+The DTLS Heartbeat Extension indicates a DTLS session SHOULD be
+terminated if the peer does not respond after the retransmission
+limit is reached. Given the unpredictability of message delivery
+in the typical DOTS scenario, this rigidity only adds to concerns
+about the aptness of DLTS for DOTS transport security.
 
- # XXX move to protocol info section
+#### Ongoing Evaluations  ####
+
+The DOTS Working Group will need to evaluate available options
+for meeting the goal of providing protocol confidentiality,
+integrity, and authenticity.
+
+The DTLS in Constrained Environments {{DICE}} Working Group is
+currently evaluating and developing techniques for transport
+security in network conditions that may be similar to those in
+which DOTS will need to work. In particular, 
 
 Additionally, the protocol or protocols must be rich enough to
 
@@ -292,12 +414,6 @@ Additionally, the protocol or protocols must be rich enough to
 * deliver feedback to the signaler from the entity or entities handling a
   threat on the signaler's behalf.
 
-The constraints imposed by the likelihood of a congested or saturated link
-between endpoints limit
-
-These additional requirements on top of the network constraints imposed by
-attack traffic demand a method to preconfigure certain aspects of the signaling
-between endpoints.
 
  #XXX This should be moved to protocol requirements section below
 
@@ -325,8 +441,33 @@ Configuration data would include such things as:
 * Other information not well-suited to transmission in a compact
   format over a link made 
 
+IANA Considerations
+===================
+
+TODO
 
 Security Considerations
 =======================
+
+The DOTS Working Group was formed to standardize methods for realtime
+inter-domain threat signaling. Any protocols must therefore be capable
+of transmitting information over public networks, with consequent
+requirements for message integrity, confidentiality, and authenticity.
+
+Transport security and message authenticity are addressed above. In the
+event either is compromised, regardless of the method involved, the
+security risks exposed include:
+
+* attack telemetry forgery
+* threat handling request forgery
+* Denial of Service (DoS) attacks
+
+In scenarios in which DOTS endpoints are communicating across public
+networks, the endpoints are themselves subject to attack. Endpoint
+operators SHOULD take steps to restrict access as much as possible to
+known valid peers through application of network policy and peer
+authentication.
+
+TODO
 
 --- back
