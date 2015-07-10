@@ -232,7 +232,22 @@ are not required to be.
 Protocol                        {#protocol}
 ========
 
-The following are requirements for successful threat signaling.
+This section examines requirements for successful threat signaling.
+
+The Working Group has thus far focused attention on adapting IPFIX
+as a possible vehicle for the DOTS protocol. The expectation as
+described in {{I-D.teague-open-threat-signaling}} is that IPFIX's
+templating system will provide DOTS the necessary flexibility and
+extensibility, while the wide availability of IPFIX will lower the
+bar for adoption among vendors. The IANA registry of IPFIX
+Informational Entities [IANA-IPFIX-IE] similarly increases the appeal
+of IPFIX by eliminating the need to define a variety of field types.
+
+However, the ultimate selection of IPFIX as the foundation of the
+DOTS protocol is by no means certain at this stage. It is hoped
+that by reaching a common understanding of protocol requirements
+the Working Group will be able to make rapid progress defining the
+protocol itself.
 
 Operation                       {#protocol-operation}
 ---------
@@ -379,7 +394,9 @@ Some of this overhead may be eliminated using preshared keys (e.g.,
 {{RFC5487}} and {{RFC5489}}), but the round-trip overhead of the
 three-way handshake is less easily overcome. The current drafts
 for TLS 1.3 {{TLS13}} make some headway in this regard, introducing
-the 1-RTT TLS handshake.
+a 1-RTT TLS handshake. This is a vast improvement for DOTS operations,
+but the timeline for standardization and vendor implementation is
+uncertain.
 
 Regardless of TLS handshake innovation, DTLS by itself lacks a way
 to detect dead peers. The DTLS Heartbeat Extension {{RFC6520}}
@@ -393,53 +410,71 @@ limit is reached. Given the unpredictability of message delivery
 in the typical DOTS scenario, this rigidity only adds to concerns
 about the aptness of DLTS for DOTS transport security.
 
-#### Ongoing Evaluations  ####
+#### Ongoing Work ####
 
 The DOTS Working Group will need to evaluate available options
 for meeting the goal of providing protocol confidentiality,
-integrity, and authenticity.
+integrity, and authenticity. Guidance should be sought from
+the TLS Working Group as appropriate.
 
 The DTLS in Constrained Environments {{DICE}} Working Group is
 currently evaluating and developing techniques for transport
 security in network conditions that may be similar to those in
-which DOTS will need to work. In particular, 
+which DOTS will need to work.
 
-Additionally, the protocol or protocols must be rich enough to
+Message Data
+------------
+
+As we note above, the Working Group has thus far focused on the
+suitability of IPFIX as the DOTS signaling protocol. This section
+makes no judgment in that regard.
+
+### Signal ###
+
+In addition to the requirements laid out in the Protocol Operation,
+section the Signal MUST be able to:
 
 * provide such attack telemetry as is available to the signaler,
 * permit the signaler to request or withdraw a request for intervention
-  from the signal receiver, # XXX
+  from the signal receiver,
 * permit the signaler to request refinement or expansion of the scope of threat
   handling performed by the signal receiver,
-* deliver feedback to the signaler from the entity or entities handling a
-  threat on the signaler's behalf.
+* allow customization to the extent required to adapt to emerging requirements
+  or local needs.
 
+### Signal Response ###
 
- #XXX This should be moved to protocol requirements section below
+In addition to the requirements laid out in the Protocol Operation
+section, the Signal Response SHOULD deliver feedback to the signaler
+from the entity or entities handling a threat on the signaler's behalf.
 
- # XXX Move bulk of this to protocol requirements section below
-A message sent from a DOTS Signaler to a Signal Handler. The Signal
-  carries data necessary to identify the Signaler, to provide indicators of the
-  the Signal Channel health (e.g., a timestamp or sequence number of the
-  last message received), to indicate Supplicant status (i.e., whether
-  the Signaler is requesting threat handling), and any available Attack Telemetry.
+Feedback would include threat handling status, threat handling scope,
+blocked packet and byte counters, and so on.
 
+Configuration Channel
+=====================
 
-* *Signal Response* - A message sent from a Signal Handler to a Signaler. A Signal
-  Reponse shares some characteristics with a Signal, such as identifying data
-  and indicators of Signal Channel health. The Signal Response also provides
-  feedback relating to any ongoing threat handling requested by the Supplicant.
-  Such feedback might include packet and byte counters, indicators of mitigation
-  scope and status, and so on.
+The Configuration Channel would permit local operator control over
+threat handling by a Signal Handler.
 
-Configuration data would include such things as:
+Configurable features might include:
 
 * Signaler address space protection preferences
 * Static Black/White lists to apply during threat handling
 * UUID assigned to the Signaler by the Signal Handler, which the
-  Signaler must include in subsequent Signals.
-* Other information not well-suited to transmission in a compact
-  format over a link made 
+  Signaler must include in subsequent Signals
+* Other information not well-suited to transmission under attack
+  conditions
+
+Configuration Protocol
+----------------------
+
+An obvious choice for the configuration protocol is a RESTful interface
+over a secure HTTP {{RFC2616}} channel. Such interfaces are
+well-understood and easily adopted. With configuration as a concern,
+{{I-D.ietf-netconf-restconf}} may be a good fit for DOTS configuration
+needs.
+
 
 IANA Considerations
 ===================
