@@ -26,8 +26,8 @@ author:
         email: amortensen@arbor.net
 
 normative:
-  RFC768:
-  RFC793:
+  RFC0768:
+  RFC0793:
   RFC1191:
   RFC2119:
   RFC2616:
@@ -61,7 +61,7 @@ informative:
 
 --- abstract
 
-This document discusses the requirements for a protocol meeting the
+This document discusses the requirements for a protocol sufficient for the
 goals of the DDoS Open Threat Signaling (DOTS) Working Group.
 
 
@@ -74,8 +74,8 @@ Overview
 --------
 
 As DDoS attack scale and frequency continue to grow, a number of cloud
-mitigation providers have emerged to offer traffic scrubbing services on
-request. Each service offers its own ad hoc interfaces for subscribers to
+mitigation providers have emerged to offer on-demand traffic scrubbing
+servicest. Each service offers its own ad hoc interfaces for subscribers to
 request threat handling, leaving subscribers tied to proprietary implementations
 that are not portable from service to service. These ad hoc implementations
 also severely limit the subset of network elements capable of participating
@@ -87,8 +87,8 @@ The DOTS Working Group has assigned itself the task of standardizing a protocol
 or protocols to address that lack.
 
 The requirements for these protocols are unusually stringent. The data link
-between signaling elements may be saturated with attack traffic--likely inbound,
-but outbound congestion must also be considered--and the signaling elements
+between signaling elements may be saturated with attack traffic---likely inbound,
+but outbound congestion must also be considered---and the signaling elements
 cannot rely an the availability of an out-of-band channel to report the
 attack and request threat handling. High packet loss rates are to be
 expected, rendering every round trip uncertain.
@@ -139,8 +139,7 @@ Configuration Channel
 The Configuration Channel is a RESTful {{REST}} interface to
 establish a common understanding of signal and threat handling
 between the Signaler and Signal Handler. The RESTful interface
-enables application control over DOTS elements, improving
-attack response coordination through exchange of 
+enables local operator control over DOTS elements.
 
 Signal Channel
 --------------
@@ -154,12 +153,9 @@ Signal
 
 A DOTS Signal is a message sent from a Signaler to a Signal Handler.
 The Signal carries information necessary to identify the Signaler
-and communicate Signaler intent, attack insight to the Signal Handler,
-and indicators useful for measuring Signal Channel Health.
-
-A Signal permits a Signaler to r
-The Signal is also the vehicle through which a Signaler requests
-threat handling.
+and communicate Signaler intent (including threat handling requests),
+attack insight to the Signal Handler, and indicators useful for
+measuring Signal Channel Health.
 
 Signal Response
 ---------------
@@ -174,7 +170,7 @@ Note that Signal Responses are sent without solicitation by a
 Signaler. That is, a Signal Handler sends Signal Responses to
 an established Signaler regardless of whether the Signal
 Handler has received a Signal message. (See Signal Channel
-Health below).
+Health below.)
 
 Signaler
 --------
@@ -244,7 +240,7 @@ Informational Entities [IANA-IPFIX-IE] similarly increases the appeal
 of IPFIX by eliminating the need to define a variety of field types.
 
 However, the ultimate selection of IPFIX as the foundation of the
-DOTS protocol is by no means certain at this stage. It is hoped
+DOTS protocol is by no means certain at this stage. It is our hope
 that by reaching a common understanding of protocol requirements
 the Working Group will be able to make rapid progress defining the
 protocol itself.
@@ -257,17 +253,16 @@ on protocol reliability but on protocol resiliency. Signal
 lossiness, to a greater or lesser degree, is to be expected, and
 the protocol must continue to operate regardless.
 
+DOTS should be able to absorb the loss of multiple consecutive
+Signals or Signal Responses and still operate nominally, relying on
+measures like redundant message transmission to increase the
+likelihood of successful delivery. By the same token, the protocol
+demands the DOTS nodes share a common understanding of a failed
+signal channel.
+
 This section discusses the protocol characteristics required to
 achieve the necessary resiliency, while also retaining the
 signal effectiveness sought by the Working Group.
-
-DOTS should be able to absorb the loss of multiple consecutive Signals or
-Signal Responses and still operate nominally, relying on
-measures like redundant message transmission to increase the
-likelihood of successful delivery.
-
-By the same token, the protocol demands the DOTS nodes share a
-common understanding of a failed signal channel.
 
 ### Endpoint Communication ###
 
@@ -346,7 +341,7 @@ subsequent connection teardown.
 
 As such, it is RECOMMENDED that the DOTS protocol use
 connectionless transports like the User Datagram Protocol (UDP)
-{{RFC768}}. While UDP imposes some additional work on the protocol,
+{{RFC0768}}. While UDP imposes some additional work on the protocol,
 the minimal overhead for transmission aligns with DOTS requirements
 for protocol resiliency.
 
@@ -385,16 +380,16 @@ and authenticity" in any developed or adapted protocols.
 
 On the surface, Datagram Transport Layer Security {{RFC6347}}
 would seem to be the obvious choice to meet those requirements.
-However, the conventional three-way TLS handshake using public-key
+However, the conventional TLS handshake using public-key
 infrastructure incurs significant overhead. The elevated
 likelihood of handshake failure due to saturated links or
 otherwise hostile network conditions may be unacceptable for DOTS.
 
 Some of this overhead may be eliminated using preshared keys (e.g.,
 {{RFC5487}} and {{RFC5489}}), but the round-trip overhead of the
-three-way handshake is less easily overcome. The current drafts
-for TLS 1.3 {{I-D.ietf-tls-tls13}} make some headway in this regard,
-introducing a 1-RTT TLS handshake. This is a vast improvement for DOTS
+handshake is less easily overcome. The current drafts for TLS 1.3
+{{I-D.ietf-tls-tls13}} make some headway in this regard, introducing
+a 1-RTT TLS handshake. This is a vast improvement for DOTS
 operations, but the timeline for standardization and vendor
 implementation is uncertain.
 
@@ -410,17 +405,17 @@ limit is reached. Given the unpredictability of message delivery
 in the typical DOTS scenario, this rigidity only adds to concerns
 about the aptness of DLTS for DOTS transport security.
 
-#### Ongoing Work ####
+#### Continued Evaluation ####
 
 The DOTS Working Group will need to evaluate available options
 for meeting the goal of providing protocol confidentiality,
 integrity, and authenticity. Guidance should be sought from
 the TLS Working Group as appropriate.
 
-The DTLS in Constrained Environments {{DICE}} Working Group is
-currently evaluating and developing techniques for transport
-security in network conditions that may be similar to those in
-which DOTS will need to work.
+Guidance and insight may also be found in the DTLS in Constrained
+Environments {{DICE}} Working Group. The DICE WG is currently
+evaluating and developing techniques for transport security in network
+conditions that may be similar to those in which DOTS will need to work.
 
 Message Data
 ------------
@@ -450,6 +445,7 @@ from the entity or entities handling a threat on the signaler's behalf.
 
 Feedback would include threat handling status, threat handling scope,
 blocked packet and byte counters, and so on.
+
 
 Configuration Channel
 =====================
@@ -481,6 +477,7 @@ IANA Considerations
 
 TODO
 
+
 Security Considerations
 =======================
 
@@ -504,5 +501,16 @@ known valid peers through application of network policy and peer
 authentication.
 
 TODO
+
+
+Acknowledgments
+===============
+
+Roland Dobbins deserves full credit for suggesting the Signal Relay,
+as well as thanks for his insight and his generosity with his time as
+we discussed the topics that led to this draft.
+
+Thanks to Larry Huston, Sean O'Hara, and David Watson for
+discussions and support.
 
 --- back
